@@ -624,25 +624,41 @@
 </footer>
 
 <script>
-  // Contact form submission (Formspree)
+  // Contact form submission (Formspree, with mailto fallback)
   const cfForm = document.getElementById('contactForm');
+  const CONTACT_EMAIL = 'crathira2002@gmail.com';
+
+  function openMailtoFallback() {
+    const name = document.getElementById('cf-name').value.trim();
+    const email = document.getElementById('cf-email').value.trim();
+    const message = document.getElementById('cf-message').value.trim();
+    const subject = `Portfolio message from ${name || 'a visitor'}`;
+    const body = `${message}\n\n— ${name} (${email})`;
+    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }
+
   if (cfForm) {
     cfForm.addEventListener('submit', async function (e) {
       e.preventDefault();
       const status = document.getElementById('cf-status');
       const btn = document.getElementById('cf-submit');
       const endpoint = cfForm.getAttribute('action');
-
-      if (!endpoint || endpoint.includes('YOUR_FORM_ID')) {
-        status.textContent = 'Form isn\'t connected yet — see setup instructions to activate it.';
-        status.className = 'form-status error';
-        return;
-      }
+      const notConfigured = !endpoint || endpoint.includes('YOUR_FORM_ID');
 
       btn.disabled = true;
       btn.textContent = 'Sending...';
       status.textContent = '';
       status.className = 'form-status';
+
+      // Not wired up to Formspree yet -> go straight to email fallback
+      if (notConfigured) {
+        status.textContent = "Opening your email app to send this directly...";
+        status.className = 'form-status success';
+        openMailtoFallback();
+        btn.disabled = false;
+        btn.textContent = 'Send Message';
+        return;
+      }
 
       try {
         const res = await fetch(endpoint, {
@@ -655,12 +671,14 @@
           status.className = 'form-status success';
           cfForm.reset();
         } else {
-          status.textContent = 'Something went wrong. Please try emailing me directly instead.';
+          status.textContent = "Couldn't reach the server — opening your email app instead.";
           status.className = 'form-status error';
+          openMailtoFallback();
         }
       } catch (err) {
-        status.textContent = 'Network error. Please try emailing me directly instead.';
+        status.textContent = "Couldn't reach the server — opening your email app instead.";
         status.className = 'form-status error';
+        openMailtoFallback();
       } finally {
         btn.disabled = false;
         btn.textContent = 'Send Message';
