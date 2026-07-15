@@ -276,6 +276,45 @@
   .contact-inner h2{font-size:clamp(2rem,4vw,2.9rem); max-width:18ch; margin:0 auto 20px;}
   .contact-inner p{color:var(--slate); max-width:44ch; margin:0 auto 34px;}
   .contact-links{display:flex; justify-content:center; gap:18px; flex-wrap:wrap;}
+
+  /* ---------- Contact form ---------- */
+  .contact-form-wrap{max-width:560px; margin:56px auto 0;}
+  .form-divider{
+    display:flex; align-items:center; gap:14px;
+    font-family:'IBM Plex Mono',monospace; font-size:0.78rem; color:var(--slate);
+    text-transform:uppercase; letter-spacing:0.05em; margin-bottom:28px;
+  }
+  .form-divider::before, .form-divider::after{content:''; flex:1; height:1px; background:var(--line);}
+  .contact-form{
+    text-align:left; background:var(--white); border:2px solid var(--ink); border-radius:16px;
+    padding:32px; box-shadow:8px 8px 0 var(--violet);
+  }
+  .form-row{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  .field{margin-bottom:18px; display:flex; flex-direction:column; gap:6px;}
+  .field label{
+    font-family:'IBM Plex Mono',monospace; font-size:0.72rem; text-transform:uppercase;
+    letter-spacing:0.05em; font-weight:700; color:var(--violet-deep);
+  }
+  .field input, .field textarea{
+    font-family:'Inter', sans-serif; font-size:0.95rem; color:var(--ink);
+    border:2px solid var(--line); border-radius:8px; padding:11px 14px;
+    background:var(--paper); transition:border-color .2s, box-shadow .2s; resize:vertical;
+  }
+  .field input:focus, .field textarea:focus{
+    outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(0,194,168,0.18);
+  }
+  .contact-form .btn{width:100%; border-radius:10px; cursor:pointer;}
+  .contact-form .btn:disabled{opacity:0.6; cursor:not-allowed; transform:none;}
+  .form-status{
+    margin-top:14px; font-family:'IBM Plex Mono',monospace; font-size:0.85rem; text-align:center; min-height:1.2em;
+  }
+  .form-status.success{color:var(--teal);}
+  .form-status.error{color:var(--coral);}
+
+  @media (max-width:600px){
+    .form-row{grid-template-columns:1fr;}
+    .contact-form{padding:24px;}
+  }
   footer{
     padding:34px 0; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:0.78rem;
     color:#D9CBFF; background:var(--ink);
@@ -361,7 +400,7 @@
     </div>
     <div class="hero-photo">
       <div class="photo-frame">
-        <img src="me.jpeg" alt="Portrait of Athira C R">
+        <img src="photo.jpg" alt="Portrait of Athira C R">
       </div>
     </div>
   </div>
@@ -555,6 +594,28 @@
       <a class="btn btn-outline" href="https://linkedin.com/in/athira-c-r-84678b230" target="_blank" rel="noopener">LinkedIn</a>
       <a class="btn btn-outline" href="https://github.com/crathira7687" target="_blank" rel="noopener">GitHub</a>
     </div>
+
+    <div class="contact-form-wrap">
+      <p class="form-divider"><span>or send a message directly</span></p>
+      <form id="contactForm" class="contact-form" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+        <div class="form-row">
+          <div class="field">
+            <label for="cf-name">Name</label>
+            <input type="text" id="cf-name" name="name" placeholder="Your name" required>
+          </div>
+          <div class="field">
+            <label for="cf-email">Email</label>
+            <input type="email" id="cf-email" name="email" placeholder="you@company.com" required>
+          </div>
+        </div>
+        <div class="field">
+          <label for="cf-message">Message</label>
+          <textarea id="cf-message" name="message" rows="4" placeholder="Tell me a bit about the role or why you're reaching out..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-solid" id="cf-submit">Send Message</button>
+        <p id="cf-status" class="form-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
   </div>
 </section>
 
@@ -563,6 +624,50 @@
 </footer>
 
 <script>
+  // Contact form submission (Formspree)
+  const cfForm = document.getElementById('contactForm');
+  if (cfForm) {
+    cfForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const status = document.getElementById('cf-status');
+      const btn = document.getElementById('cf-submit');
+      const endpoint = cfForm.getAttribute('action');
+
+      if (!endpoint || endpoint.includes('YOUR_FORM_ID')) {
+        status.textContent = 'Form isn\'t connected yet — see setup instructions to activate it.';
+        status.className = 'form-status error';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      status.textContent = '';
+      status.className = 'form-status';
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          body: new FormData(cfForm),
+          headers: { 'Accept': 'application/json' }
+        });
+        if (res.ok) {
+          status.textContent = "Thanks! Your message has been sent — I'll get back to you soon.";
+          status.className = 'form-status success';
+          cfForm.reset();
+        } else {
+          status.textContent = 'Something went wrong. Please try emailing me directly instead.';
+          status.className = 'form-status error';
+        }
+      } catch (err) {
+        status.textContent = 'Network error. Please try emailing me directly instead.';
+        status.className = 'form-status error';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send Message';
+      }
+    });
+  }
+
   // Make floating skill icons draggable
   document.querySelectorAll('.ficon').forEach(icon => {
     let dragging = false, offsetX = 0, offsetY = 0;
